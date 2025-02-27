@@ -1,0 +1,4 @@
+fastapi
+iso8601
+uvicorn
+pydantic
