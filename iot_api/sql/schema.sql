@@ -2,6 +2,9 @@ create database exame_backend;
 
 use exame_backend;
 
+CREATE DATABASE exame_backend;
+CREATE USER root WITH ENCRYPTED PASSWORD 'guel6102005';
+GRANT ALL PRIVILEGES ON DATABASE exame_backend TO root;
 
 create table user(
     id int not null primary key auto_increment,

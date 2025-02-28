@@ -1,13 +1,44 @@
 from fastapi import FastAPI, Depends, HTTPException, status
+from sqlalchemy import Column, Integer, String, create_engine
 from auth import User, get_password_hash, verify_password, create_access_token, decode_access_token, oauth2_scheme
 from models.rest.post_reading import PostReading
 from models.rest.get_reading import GetReading
 from models.rest.post_server import PostServer
-
-app = FastAPI()
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+from config.settings import DATABASE_URL
 
 # Banco de dados simulado
 fake_users_db = {}
+
+
+engine = create_engine(DATABASE_URL)
+
+Base = declarative_base()
+
+# Criando a classe para as tabelas
+class Item(Base):
+    __tablename__ = 'items'
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, index=True)
+    description = Column(String, index=True)
+
+# Criação da sessão do banco de dados
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+        print("Conexão com o banco de dados estabelecida")
+    finally:
+        db.close()
+
+
+app = FastAPI()
+
+get_db()
 
 # Endpoints
 @app.post("/auth/register")
@@ -71,3 +102,5 @@ if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app)
 #FIXME 
+
+Base.metadata.create_all(bind=engine)

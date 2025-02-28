@@ -2,3 +2,5 @@ fastapi
 iso8601
 uvicorn
 pydantic
+psycopg2-binary
+sqlalchemy
