@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends, HTTPException, status
 from auth import User, get_password_hash, verify_password, create_access_token, decode_access_token, oauth2_scheme
 from models.rest.post_reading import PostReading
 from models.rest.get_reading import GetReading
-
+from models.rest.post_server import PostServer
 
 app = FastAPI()
 
@@ -15,11 +15,11 @@ async def register(user: User):
     if user.username in fake_users_db:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Usuário já existe",
+            detail="Username already registered",
         )
     hashed_password = get_password_hash(user.password)
     fake_users_db[user.username] = {"username": user.username, "password_hash": hashed_password}
-    return {"msg": "Usuário registrado com sucesso"}
+    return {"msg": "User registered successfully"}
 
 @app.post("/auth/login")
 async def login(user: User):
@@ -27,7 +27,7 @@ async def login(user: User):
     if not db_user or not verify_password(user.password, db_user["password_hash"]):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Credenciais inválidas",
+            detail="Invalid username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
     access_token = create_access_token(data={"sub": user.username})
@@ -40,10 +40,15 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
     if username is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token inválido",
+            detail="Invalid authentication token",
             headers={"WWW-Authenticate": "Bearer"},
         )
     return username
+
+
+@app.get("/data", status_code=status.HTTP_200_OK)
+async def get_reading(filter_query: GetReading = Depends()):
+    return filter_query
 
 # Exemplo de endpoint protegido
 #FIXME
@@ -57,9 +62,9 @@ async def read_users_me(current_user: str = Depends(get_current_user)):
 async def register_reading(reading: PostReading):
     return reading
 
-@app.get("/data", status_code=status.HTTP_200_OK)
-async def get_reading(filter_query: GetReading = Depends()):
-    return filter_query
+@app.post("/servers", status_code=status.HTTP_201_CREATED)
+async def register_server(server : PostServer):
+    return server
 
 
 if __name__ == "__main__":
