@@ -40,3 +40,20 @@ O sistema deve ter um mecanismo de autenticação baseado em JWT para proteger e
 Endpoints esperados:
 ● POST /auth/register → Criar um novo usuário.
 ● POST /auth/login → Autenticar usuário e retornar um token JWT.
+
+
+- OQ falta
+
+verificar o status do servidor / ver se ele teve alguma atv nos ultimos 10 s
+
+fazer as queries e agregacoes da funcao get data
+
+implementar middlewares de autenticação
+
+implementar o servidor que envia as requisicoes como um servico separado que pode ser iniciado e "Simula"
+os iot's
+
+implementar os testes
+- testar mappers
+- testar os servicos talvez
+

@@ -24,7 +24,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = int(get_env_variable("ACCESS_TOKEN_EXPIRE_MINUTES"
 # Configurações do banco de dados
 
 DB_USER = get_env_variable("DB_USER", "root")
-DB_PASSWORD = get_env_variable("DB_PASSWORD")
+DB_PASSWORD = get_env_variable("DB_PASSWORD", "guel6102005")
 DB_HOST = get_env_variable("DB_HOST", "localhost")
 DB_NAME = get_env_variable("DB_NAME", "exame_backend")
 

@@ -4,3 +4,7 @@ uvicorn
 pydantic
 psycopg2-binary
 sqlalchemy
+python-dotenv
+jwt
+passlib[bcrypt]
+ulid-py
