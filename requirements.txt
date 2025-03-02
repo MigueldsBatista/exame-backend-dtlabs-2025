@@ -8,3 +8,5 @@ python-dotenv
 jwt
 passlib[bcrypt]
 ulid-py
+pytest
+httpx

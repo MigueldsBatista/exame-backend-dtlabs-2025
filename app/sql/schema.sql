@@ -18,7 +18,7 @@ CREATE TABLE server (
 CREATE TABLE reading (
     id SERIAL PRIMARY KEY,
     server_ulid CHAR(26) NOT NULL,
-    timestamp_ms TIMESTAMP NOT NULL,
+    timestamp TIMESTAMP NOT NULL,
     temperature DECIMAL(4, 1),
     humidity DECIMAL(4, 1),
     voltage DECIMAL(4, 1),

@@ -6,8 +6,6 @@ from mappers.server_mapper import ServerMapper
 
 
 class ServerService:
-    """Service for Server operations
-    This service handles the business logic for Server operations."""
 
     def __init__(self, db: Session):
         """Initialize the service with a database session."""

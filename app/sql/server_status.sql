@@ -4,7 +4,7 @@ use exame_backend;
 SELECT 
     s.id,
     CASE 
-        WHEN MAX(r.timestamp_ms) < NOW() - INTERVAL 10 SECOND THEN 'offline'
+        WHEN MAX(r.timestamp) < NOW() - INTERVAL 10 SECOND THEN 'offline'
         ELSE 'online'
     END AS status
 FROM 

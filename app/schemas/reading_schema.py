@@ -10,20 +10,25 @@ class GetReading(BaseModel):
     server_ulid: Optional[str] = None  # The unique identifier of the server
     sensor_type: Optional[str] = None  # The type of sensor
     aggregation: Optional[str] = None  # The type of aggregation
+    start_time: Optional[datetime] = None  # The start time for the query
+    end_time: Optional[datetime] = None  # The end time for the query
 
-    @field_validator("sensor_type", mode="before")
+    @field_validator("sensor_type", mode="after")
     @classmethod
-    def validate_aggregation(cls, value):
+    def validate_sensor_type(cls, value):
         """Validator for sensor_type field
         This validator ensures that the sensor_type value is valid."""
         if value is None:
             return value
         try:
-            return SensorType(value)
-        except ValueError:
-            raise ValueError(f"Invalid sensor type: {value}")
+            sensor_value = SensorType(value)
+            return sensor_value.value
+        
+        except ValueError as e:
 
-    @field_validator("aggregation", mode="before")
+            raise ValueError(f"Invalid sensor type: {value}") from e
+
+    @field_validator("aggregation", mode="after")
     @classmethod
     def validate_aggregation(cls, value):
         """Validator for aggregation field
@@ -31,10 +36,13 @@ class GetReading(BaseModel):
         if value is None:
             return value
         try:
-            return AggregationType(value)
-        except ValueError:
-            raise ValueError(f"Invalid aggregation type: {value}")
+            aggregation_value = AggregationType(value)
+            return aggregation_value.value
+        except ValueError as e:
+            raise ValueError(f"Invalid aggregation type: {value}") from e
 
+    def __str__(self):
+        return f"GetReading(server_ulid={self.server_ulid}, sensor_type={self.sensor_type}, aggregation={self.aggregation}, start_time={self.start_time}, end_time={self.end_time})"
 
 #-----------------------------------------------------------------------
 
@@ -86,14 +94,20 @@ class PostReading(BaseModel):
 class ReadingResponse(BaseModel):
     """Schema for reading response data
     This schema is used to structure the response data when querying reading information."""
-    id: int  # The unique identifier of the reading
-    server_ulid: str  # The unique identifier of the server
-    temperature: Optional[float]  # The temperature reading
-    humidity: Optional[float]  # The humidity reading
-    current: Optional[float]  # The current reading
-    voltage: Optional[float]  # The voltage reading
-    timestamp: datetime  # The timestamp of the reading
+    server_ulid: Optional[str] = None
+    temperature: Optional[float] = None
+    humidity: Optional[float]  = None
+    current: Optional[float] = None
+    voltage: Optional[float] = None
+    timestamp: datetime = None
 
     model_config = {
-        "from_attributes": True  # Pydantic v2 allows loading directly from the entity
+        "from_attributes": True,
+        "populate_by_name": True,
+        "exclude_unset": True
     }
+
+
+    def __str__(self):
+        return f"ReadingResponse(server_ulid={self.server_ulid}, temperature={self.temperature}, humidity={self.humidity}, current={self.current}, voltage={self.voltage}, timestamp={self.timestamp})"
+    

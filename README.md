@@ -44,6 +44,8 @@ Endpoints esperados:
 
 - OQ falta
 
+padronizar as respostas do servidor
+
 verificar o status do servidor / ver se ele teve alguma atv nos ultimos 10 s
 
 fazer as queries e agregacoes da funcao get data
@@ -57,3 +59,4 @@ implementar os testes
 - testar mappers
 - testar os servicos talvez
 
+implementar sistema de check health

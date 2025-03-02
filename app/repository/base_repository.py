@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from typing import Generic, Type, TypeVar
 from sqlalchemy.exc import NoReferencedTableError
+from sqlalchemy.exc import IntegrityError
 
 T = TypeVar("T")
 
@@ -49,18 +50,6 @@ class BaseRepository(Generic[T]):
         return False
 
     def save(self, obj: T):
-        """Save a new or existing record.
-        
-        Args:
-            obj (T): The record to save.
-        
-        Returns:
-            T: The saved record.
-        
-        Raises:
-            ValueError: If the object is None.
-            NoReferencedTableError: If there is a database error.
-        """
         if obj is None:
             raise ValueError("Object can't be None")
         
@@ -76,6 +65,6 @@ class BaseRepository(Generic[T]):
             self.db.add(obj)
             self.db.commit()
             return obj
-        except NoReferencedTableError as e:
+        except (NoReferencedTableError, IntegrityError) as e:
             self.db.rollback()
             raise e
