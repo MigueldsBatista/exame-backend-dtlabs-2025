@@ -1,28 +1,37 @@
 import pytest
 from fastapi import status
-from app.schemas.reading_schema import PostReading, GetReading  
-from app.services.reading_service import ReadingService  
+from app.schemas.reading_schema import PostReading, GetReading
+from app.services.reading_service import ReadingService
 import datetime
 
-def test_post_reading(client, db):
-
-    response = client.post("/servers", json={"server_name": "Dolly 1"})
+def post_invalid_reading(authenticated_client, db):
+    response = authenticated_client.post("/servers", json={"server_name": "Dolly 1"})
     server_ulid = response.json()["server_ulid"]
-    print(server_ulid)
-    response = client.post("/data", json={
+
+    response = authenticated_client.post("/data", json={
+        "server_ulid": server_ulid,
+        "timestamp": "2025-10-01T12:00:00Z"
+    })
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+
+def test_post_reading(authenticated_client, db):
+
+    response = authenticated_client.post("/servers", json={"server_name": "Dolly 1"})
+    server_ulid = response.json()["server_ulid"]
+
+    response = authenticated_client.post("/data", json={
         "server_ulid": server_ulid,
         "temperature": 25.5,
         "timestamp": "2025-10-01T12:00:00Z"
     })
 
     assert response.status_code == status.HTTP_201_CREATED
-    print(response.json())
     server_ulid = response.json()["server_ulid"]
     assert server_ulid is not None
-    
   
-def test_save_reading(client, db):
-    response = client.post("/servers", json={"server_name": "Dolly 1"})
+def test_save_reading(authenticated_client, db):
+    response = authenticated_client.post("/servers", json={"server_name": "Dolly 1"})
     server_ulid = response.json()["server_ulid"]
 
     reading_service = ReadingService(db)
@@ -37,43 +46,240 @@ def test_save_reading(client, db):
     readings = reading_service.find_all()
     assert len(readings) == 1
 
-#FIXME
-def test_get_readings(client, db):
-    response = client.post("/servers", json={"server_name": "Dolly 1"})
-    server_ulid = response.json()["server_ulid"]
-    reading_service = ReadingService(db)
-    reading1 = PostReading(server_ulid=server_ulid, temperature=25.5, timestamp="2025-10-01T12:00:00Z")
-    reading2 = PostReading(server_ulid=server_ulid, humidity=30.0, timestamp="2025-10-01T13:00:00Z")
-    reading_service.save(reading1)
-    reading_service.save(reading2)
 
-    # Faz a requisição GET sem filtros
-    response = client.get("/data")
-
-    # Verifica a resposta
+def test_get_readings(authenticated_client, db):
+    response = authenticated_client.get("/data")
     assert response.status_code == status.HTTP_200_OK
-    assert len(response.json()) == 2
+
+def test_get_reading_not_logged_in(authenticated_client, db):
+    authenticated_client.headers = {}
+    response = authenticated_client.get("/data")
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
-#FIXME
-def test_get_filtered_readings(client, db):
-    response = client.post("/servers", json={"server_name": "Dolly 1"})
+def test_get_filtered_server_readings(authenticated_client, db):
+    response = authenticated_client.post("/servers", json={"server_name": "Dolly 1"})
+
     server_ulid1 = response.json()["server_ulid"]
 
-    response = client.post("/servers", json={"server_name": "Dolly 2"})
-    server_ulid2 = response.json()["server_ulid"]
+    response = authenticated_client.post("/servers", json={"server_name": "Dolly 2"})
 
-    reading_service = ReadingService(db)
-    reading1 = PostReading(server_ulid=server_ulid1, temperature=25.5, timestamp="2025-10-01T12:00:00Z")
-    reading2 = PostReading(server_ulid=server_ulid2, humidity=30.0, timestamp="2025-10-01T13:00:00Z")
-
-    reading_service.save(reading1)
-    reading_service.save(reading2)
-
-
+    response = authenticated_client.post("/data", json={
+        "server_ulid": server_ulid1,
+        "temperature": 25.5,
+        "timestamp": "2025-10-01T12:00:00Z"
+    })
+    
     filters = {"server_ulid": server_ulid1}
-    response = client.get("/data", params=filters)
-    # Verifica a resposta filtrada
+
+    response = authenticated_client.get("/data", params=filters)
+
     assert response.status_code == status.HTTP_200_OK
+
     assert len(response.json()) == 1
-    assert response.json()[0]["sensor_id"] == server_ulid1
+
+    assert response.json()[0]["server_ulid"] == server_ulid1
+
+
+    
+def test_get_filtered_sensor_readings(authenticated_client, db):
+    response = authenticated_client.post("/servers", json={"server_name": "Dolly 1"})
+    server_ulid1 = response.json()["server_ulid"]
+
+    response = authenticated_client.post("/data", json={
+        "server_ulid": server_ulid1,
+        "temperature": 25.5,
+        "timestamp": "2025-10-01T12:00:00Z",
+        "humidity": 70.0,
+        "current": 1.0,
+        "voltage": 220.0
+    })
+    
+    filters = {"server_ulid": server_ulid1, "sensor_type": "temperature"}
+
+    response = authenticated_client.get("/data", params=filters)
+
+    assert response.status_code == status.HTTP_200_OK
+
+    assert len(response.json()) == 1
+
+    assert response.json()[0]["server_ulid"] == server_ulid1
+
+    assert not any(key in response.json()[0] for key in ["humidity", "current", "voltage"])
+
+
+def test_get_filtered_interval_readings(authenticated_client, db):
+    response = authenticated_client.post("/servers", json={"server_name": "Dolly 1"})
+    server_ulid1 = response.json()["server_ulid"]
+
+    # First reading - at 13:00
+    response = authenticated_client.post("/data", json={
+        "server_ulid": server_ulid1,
+        "temperature": 25.5,
+        "timestamp": "2025-10-01T13:00:00Z",
+        "humidity": 70.0,
+        "current": 1.0,
+        "voltage": 220.0
+    })
+
+    # Second reading - at 12:30
+    response1 = authenticated_client.post("/data", json={
+        "server_ulid": server_ulid1,
+        "temperature": 26.5,
+        "timestamp": "2025-10-01T12:30:00Z",
+        "humidity": 71.0,
+        "current": 1.1,
+        "voltage": 221.0
+    })
+    
+    # Filter for readings between 12:45:01 and 13:00:00
+    filters = {"server_ulid": server_ulid1, "start_time": "2025-10-01T12:45:01Z", "end_time": "2025-10-01T13:00:00Z"}
+
+    response = authenticated_client.get("/data", params=filters)
+
+    assert response.status_code == status.HTTP_200_OK
+
+    assert len(response.json()) == 1
+
+    assert response.json()[0]["server_ulid"] == server_ulid1
+    # Should be the first reading, not the second
+    assert response.json()[0]["timestamp"] == "2025-10-01T13:00:00"
+    assert response.json()[0]["temperature"] == 25.5
+
+
+def test_get_aggregated_values_by_day(authenticated_client, db):
+    """Test day-level aggregation of readings"""
+    server_ulid = _create_test_data_for_aggregations(authenticated_client)
+    
+    # Request day aggregation
+    response = authenticated_client.get("/data", params={
+        "server_ulid": server_ulid,
+        "aggregation": "day"
+    })
+    
+    # Verify response
+    assert response.status_code == status.HTTP_200_OK
+    
+    data = response.json()
+    assert len(data) == 2, "Should have 2 days of aggregated data"
+    
+    # Sort data by timestamp if needed
+    data.sort(key=lambda x: x["timestamp"])
+    
+    # Verify day 1 (Oct 1) - average of 2 readings
+    assert data[0]["timestamp"].startswith("2025-10-01")
+    assert round(data[0]["temperature"], 1) == 25.8  # (25.0 + 26.5) / 2
+    assert round(data[0]["humidity"], 1) == 70.5     # (70.0 + 71.0) / 2
+    
+    # Verify day 2 (Oct 2) - average of 3 readings
+    assert data[1]["timestamp"].startswith("2025-10-02")
+    assert round(data[1]["temperature"], 1) == 27.5  # (27.0 + 27.5 + 28.0) / 3
+    assert round(data[1]["humidity"], 1) == 73.0     # (72.0 + 73.0 + 74.0) / 3
+    
+
+def test_get_aggregated_values_by_hour(authenticated_client, db):
+    """Test hour-level aggregation of readings"""
+    server_ulid = _create_test_data_for_aggregations(authenticated_client)
+    
+    # Request hour aggregation
+    response = authenticated_client.get("/data", params={
+        "server_ulid": server_ulid,
+        "aggregation": "hour"
+    })
+    # Verify response
+    assert response.status_code == status.HTTP_200_OK
+    
+    data = response.json()
+    assert len(data) == 4, "Should have 4 hours of aggregated data"
+    
+    # Sort data by timestamp
+    data.sort(key=lambda x: x["timestamp"])
+    
+    # Check for the 4 different hours
+    hours = [entry["timestamp"] for entry in data]
+    assert any("2025-10-01T13" in h for h in hours), "Should have Oct 1, 13:00"
+    assert any("2025-10-01T14" in h for h in hours), "Should have Oct 1, 14:00"
+    assert any("2025-10-02T12" in h for h in hours), "Should have Oct 2, 12:00"  
+    assert any("2025-10-02T13" in h for h in hours), "Should have Oct 2, 13:00"
+    
+    # Check a specific hour's data (Oct 2, 13:00 - has 2 readings)
+    hour_13_day_2 = next(entry for entry in data if "2025-10-02T13" in entry["timestamp"])
+    assert round(hour_13_day_2["temperature"], 1) == 27.8  # (27.5 + 28.0) / 2
+    
+
+def test_get_aggregated_values_by_minute(authenticated_client, db):
+    """Test minute-level aggregation of readings"""
+    server_ulid = _create_test_data_for_aggregations(authenticated_client)
+    
+    # Request minute aggregation
+    response = authenticated_client.get("/data", params={
+        "server_ulid": server_ulid,
+        "aggregation": "minute"
+    })
+    
+    # Verify response
+    assert response.status_code == status.HTTP_200_OK
+    
+    data = response.json()
+    assert len(data) == 5, "Should have 5 distinct minutes of data"
+    
+    # Check for the one minute that has two readings (Oct 2, 13:01)
+    minute_entries = [entry for entry in data if "2025-10-02T13:01" in entry["timestamp"]]
+    assert len(minute_entries) == 1
+    assert minute_entries[0]["temperature"] == 28.0
+    
+
+
+def _create_test_data_for_aggregations(authenticated_client):
+    """Helper function to create test data for aggregation tests"""
+    response = authenticated_client.post("/servers", json={"server_name": "Dolly Aggregation"})
+    server_ulid = response.json()["server_ulid"]
+    
+    # Day 1
+    authenticated_client.post("/data", json={
+        "server_ulid": server_ulid,
+        "temperature": 25.0,
+        "timestamp": "2025-10-01T13:00:00Z",
+        "humidity": 70.0,
+        "current": 1.0,
+        "voltage": 220.0
+    })
+    
+    authenticated_client.post("/data", json={
+        "server_ulid": server_ulid,
+        "temperature": 26.5,
+        "timestamp": "2025-10-01T14:00:00Z",
+        "humidity": 71.0,
+        "current": 1.1,
+        "voltage": 221.0
+    })
+    
+    # Day 2
+    authenticated_client.post("/data", json={
+        "server_ulid": server_ulid,
+        "temperature": 27.0,
+        "timestamp": "2025-10-02T12:00:00Z",
+        "humidity": 72.0,
+        "current": 1.2,
+        "voltage": 222.0
+    })
+    
+    authenticated_client.post("/data", json={
+        "server_ulid": server_ulid,
+        "temperature": 27.5,
+        "timestamp": "2025-10-02T13:00:00Z",
+        "humidity": 73.0,
+        "current": 1.3,
+        "voltage": 223.0
+    })
+    
+    authenticated_client.post("/data", json={
+        "server_ulid": server_ulid,
+        "temperature": 28.0,
+        "timestamp": "2025-10-02T13:01:00Z",
+        "humidity": 74.0, 
+        "current": 1.4,
+        "voltage": 224.0
+    })
+    
+    return server_ulid

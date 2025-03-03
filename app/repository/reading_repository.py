@@ -6,35 +6,36 @@ from models.reading import Reading
 from sqlalchemy.orm import Session
 
 class ReadingRepository(BaseRepository[Reading]):
-    """Repository for Reading model
-    This repository handles the database operations for the Reading model."""
 
     def __init__(self, session: Session):
-        """Initialize the repository with a database session."""
         super().__init__(Reading, session)
+        self.is_sqlite = 'sqlite' in str(session.bind.dialect).lower()
 
     def find_by_server_ulid(self, server_ulid: str):
-        """Find readings by server ULID.
-        
-        Args:
-            server_ulid (str): The unique identifier of the server.
-        
-        Returns:
-            List[Reading]: A list of readings associated with the given server ULID.
-        """
         return self.db.query(Reading).filter(Reading.server_ulid == server_ulid).all()
 
+    def _build_date_trunc_expr(self, aggregation_str, timestamp_column):
+        """Create database-specific date truncation expression"""
+        if self.is_sqlite:
+            # SQLite implementation - use string operations and substr
+            if aggregation_str == 'day':
+                # Format: YYYY-MM-DD
+                return func.substr(func.datetime(timestamp_column), 1, 10)
+            elif aggregation_str == 'hour':
+                # Format: YYYY-MM-DD HH:00:00
+                # The :00:00 is added to ensure a valid datetime format
+                return func.substr(func.datetime(timestamp_column), 1, 13) + ":00:00" #
+            elif aggregation_str == 'minute':
+                # Format: YYYY-MM-DD HH:MM:00
+                return func.substr(func.datetime(timestamp_column), 1, 16) + ":00"
+            else:
+                # Default to just returning the timestamp
+                return timestamp_column
+        else:
+            # PostgreSQL implementation - use date_trunc
+            return func.date_trunc(aggregation_str, timestamp_column)
 
     def find_by_filters(self, filters: GetReading=None):
-        """Find readings by query parameters.
-        
-        Args:
-            filters (GetReading): The query parameters.
-        
-        Returns:
-            List[Reading]: A list of readings that match the query parameters.
-        """
-
         query = self.db.query(Reading)
 
         if not filters:
@@ -49,20 +50,25 @@ class ReadingRepository(BaseRepository[Reading]):
         if filters.end_time:
             query = query.filter(Reading.timestamp_ms <= filters.end_time)
 
-        aggregation_columns = [
-            func.avg(Reading.temperature).label('temperature'),
-            func.avg(Reading.humidity).label('humidity'),
-            func.avg(Reading.current).label('current'),
-            func.avg(Reading.voltage).label('voltage'),
-        ]
-
+        # If aggregation is requested
         if filters.aggregation:
             aggregation_str = filters.aggregation.value if isinstance(filters.aggregation, AggregationType) else str(filters.aggregation)
-
+            
+            # Create the appropriate timestamp truncation expression based on DB type
+            trunc_expr = self._build_date_trunc_expr(aggregation_str, Reading.timestamp_ms)
+            
+            # Define aggregation columns
+            aggregation_columns = [
+                func.avg(Reading.temperature).label('temperature'),
+                func.avg(Reading.humidity).label('humidity'),
+                func.avg(Reading.current).label('current'),
+                func.avg(Reading.voltage).label('voltage'),
+            ]
+            
+            # Add the truncated timestamp column
             query = query.with_entities(
-                func.date_trunc(aggregation_str, Reading.timestamp_ms).label('timestamp'),
+                trunc_expr.label('timestamp'),
                 *aggregation_columns
-            ).group_by(func.date_trunc(aggregation_str, Reading.timestamp_ms))
+            ).group_by(trunc_expr)
 
         return query.all()
-        

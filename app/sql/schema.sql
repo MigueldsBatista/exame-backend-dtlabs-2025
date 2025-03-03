@@ -1,20 +1,20 @@
--- Excluir as tabelas existentes, se existirem
-DROP TABLE IF EXISTS reading, server, "user";
+drop database exame_backend;
 
--- Criar a tabela 'user'
+
+-- Create user table
 CREATE TABLE "user" (
     id SERIAL PRIMARY KEY,
-    username VARCHAR(255) NOT NULL,
+    username VARCHAR(255) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL
 );
 
--- Criar a tabela 'server'
+-- Create server table
 CREATE TABLE server (
-    id CHAR(26) NOT NULL PRIMARY KEY, -- A criação do ULID do servidor deve ser feita pelo backend
+    id CHAR(26) NOT NULL PRIMARY KEY, -- The server ULID creation should be handled by the backend
     server_name VARCHAR(255) NOT NULL
 );
 
--- Criar a tabela 'reading'
+-- Create reading table
 CREATE TABLE reading (
     id SERIAL PRIMARY KEY,
     server_ulid CHAR(26) NOT NULL,
@@ -26,7 +26,7 @@ CREATE TABLE reading (
     FOREIGN KEY (server_ulid) REFERENCES server(id)
 );
 
--- Adicionar a constraint 'CHECK' na tabela 'reading'
+-- Add CHECK constraint to reading table
 ALTER TABLE reading
     ADD CONSTRAINT has_any_reading CHECK (
         (humidity IS NOT NULL AND humidity > 0 AND humidity <= 100) OR

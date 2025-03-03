@@ -1,62 +1,17 @@
--- Filtro dia com servidor, intervalo de tempo e sensor.
+-- Filter by day with server, time interval and sensor.
 
-SELECT DATE(timestamp) AS day, AVG(humidity) AS avg_humidity
+SELECT DATE(timestamp_ms) AS day, AVG(temperature) AS avg_humidity
 FROM reading
-WHERE server_ulid = 'server123'  -- Filtro por servidor
-  AND timestamp BETWEEN '2025-02-28 00:00:00' AND '2025-02-28 23:59:59'  -- Filtro de intervalo de tempo
-  AND humidity IS NOT NULL  -- Filtrando apenas dados de humidade
+  WHERE timestamp_ms BETWEEN '2025-04-28 00:00:00' AND '2025-06-28 23:59:59'  -- Time interval filter
 GROUP BY day
 ORDER BY day;
 
-SELECT DATE(timestamp) AS day, HOUR(timestamp) AS hour, AVG(humidity) AS avg_humidity
-FROM reading
-WHERE server_ulid = 'server123'
-  AND timestamp BETWEEN '2025-02-28 00:00:00' AND '2025-02-28 23:59:59'
-  AND humidity IS NOT NULL
-GROUP BY day, hour
-ORDER BY day, hour;
 
-
-SELECT DATE(timestamp) AS day, HOUR(timestamp) AS hour, MINUTE(timestamp) AS minute, AVG(humidity) AS avg_humidity
-FROM reading
-WHERE server_ulid = 'server123'
-  AND timestamp BETWEEN '2025-02-28 00:00:00' AND '2025-02-28 23:59:59'
-  AND humidity IS NOT NULL
-GROUP BY day, hour, minute
-ORDER BY day, hour, minute;
-
--- SEM FILTRO DE SERVIDOR
+-- Filter by hour with server, time interval and sensor.
 SELECT 
-    DATE(timestamp) AS day,
-    HOUR(timestamp) AS hour,
-    AVG(temperature) AS avg_temperature
+    DATE(timestamp_ms) AS day,
+    AVG(temperature) AS avg_humidity
 FROM reading
-WHERE timestamp BETWEEN '2025-02-28 00:00:00' AND '2025-02-28 23:59:59'
-  AND temperature IS NOT NULL
-GROUP BY day, hour
-ORDER BY day, hour;
-
--- SEM FILTRO DE INTERVALO DE TEMPO
-
-SELECT 
-    DATE(timestamp) AS day,
-    HOUR(timestamp) AS hour,
-    AVG(humidity) AS avg_humidity
-FROM reading
-WHERE server_ulid = 'server123'
-  AND humidity IS NOT NULL
-GROUP BY day, hour
-ORDER BY day, hour;
-
-
-SELECT
-    DATE(timestamp) AS day,
-    HOUR(timestamp) AS hour,
-    AVG(humidity) AS avg_humidity,
-    AVG(temperature) AS avg_temperature
-FROM reading
-WHERE server_ulid = 'server123'
-  AND timestamp BETWEEN '2025-02-28 00:00:00' AND '2025-02-28 23:59:59'
-  AND (humidity IS NOT NULL OR temperature IS NOT NULL)  -- Considera ambos os tipos de sensor
-GROUP BY day, hour
-ORDER BY day, hour;
+WHERE timestamp_ms BETWEEN '2025-04-28 00:00:00' AND '2025-06-28 23:59:59'  -- Time interval filter
+GROUP BY day, EXTRACT(HOUR FROM timestamp_ms)
+ORDER BY day, EXTRACT(HOUR FROM timestamp_ms);

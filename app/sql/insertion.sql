@@ -1,150 +1,46 @@
-use exame_backend;
+delete from reading;
 
--- insert into reading (server_ulid, timestamp, temperature, humidity, voltage, `current`)
--- values ('server123', '2025-04-28 14:00:00', NULL, NULL, NULL, NULL);
--- WONT WORK !!
-insert into reading (server_ulid, timestamp, temperature, humidity, voltage, `current`)
-values ('server123', '2025-03-28 00:00:00', 22.5, 45.0, 3.3, 0.2);
-
-insert into reading (server_ulid, timestamp, temperature, humidity, voltage, `current`)
-values ('server123', '2025-03-28 01:00:00', 21.0, 50.0, 3.3, 0.3);
-
-insert into reading (server_ulid, timestamp, temperature, humidity, voltage, `current`)
-values ('server123', '2025-03-28 02:00:00', 20.0, 48.5, 3.2, 0.25);
-
-insert into reading (server_ulid, timestamp, temperature, humidity, voltage, `current`)
-values ('server123', '2025-03-28 03:00:00', 19.5, 47.0, 3.1, 0.28);
-
-insert into reading (server_ulid, timestamp, temperature, humidity, voltage, `current`)
-values ('server123', '2025-03-28 04:00:00', 20.5, 49.0, 3.3, 0.3);
-
-insert into reading (server_ulid, timestamp, temperature, humidity, voltage, `current`)
-values ('server123', '2025-03-28 05:00:00', 22.0, 46.5, 3.4, 0.2);
-
-insert into reading (server_ulid, timestamp, temperature, humidity, voltage, `current`)
-values ('server123', '2025-03-28 06:00:00', 23.0, 44.0, 3.5, 0.3);
-
-insert into reading (server_ulid, timestamp, temperature, humidity, voltage, `current`)
-values ('server123', '2025-03-28 07:00:00', 24.0, 43.0, 3.6, 0.4);
-
-insert into reading (server_ulid, timestamp, temperature, humidity, voltage, `current`)
-values ('server123', '2025-03-28 08:00:00', 25.0, 42.0, 3.7, 0.4);
-
-insert into reading (server_ulid, timestamp, temperature, humidity, voltage, `current`)
-values ('server123', '2025-03-28 09:00:00', 26.0, 41.5, 3.8, 0.45);
-
-insert into reading (server_ulid, timestamp, temperature, humidity, voltage, `current`)
-values ('server123', '2025-03-28 10:00:00', 27.0, 40.0, 3.9, 0.5);
-
-insert into reading (server_ulid, timestamp, temperature, humidity, voltage, `current`)
-values ('server123', '2025-03-28 11:00:00', 28.0, 39.0, 4.0, 0.5);
-
-insert into reading (server_ulid, timestamp, temperature, humidity, voltage, `current`)
-values ('server123', '2025-03-28 12:00:00', 29.0, 38.0, 4.1, 0.55);
-
-insert into reading (server_ulid, timestamp, temperature, humidity, voltage, `current`)
-values ('server123', '2025-03-28 13:00:00', 30.0, 37.5, 4.2, 0.6);
-
-insert into reading (server_ulid, timestamp, temperature, humidity, voltage, `current`)
-values ('server123', '2025-03-28 14:00:00', 31.0, 36.5, 4.3, 0.6);
-
-insert into reading (server_ulid, timestamp, temperature, humidity, voltage, `current`)
-values ('server123', '2025-03-28 15:00:00', 32.0, 35.5, 4.4, 0.65);
-
-insert into reading (server_ulid, timestamp, temperature, humidity, voltage, `current`)
-values ('server123', '2025-03-28 16:00:00', 33.0, 34.5, 4.5, 0.7);
-
-insert into reading (server_ulid, timestamp, temperature, humidity, voltage, `current`)
-values ('server123', '2025-03-28 17:00:00', 34.0, 33.0, 4.6, 0.75);
-
-insert into reading (server_ulid, timestamp, temperature, humidity, voltage, `current`)
-values ('server123', '2025-03-28 18:00:00', 35.0, 32.0, 4.7, 0.8);
-
-insert into reading (server_ulid, timestamp, temperature, humidity, voltage, `current`)
-values ('server123', '2025-03-28 19:00:00', 36.0, 31.5, 4.8, 0.85);
-
-insert into reading (server_ulid, timestamp, temperature, humidity, voltage, `current`)
-values ('server123', '2025-03-28 20:00:00', 37.0, 30.0, 4.9, 0.9);
-
-insert into reading (server_ulid, timestamp, temperature, humidity, voltage, `current`)
-values ('server123', '2025-03-28 21:00:00', 38.0, 29.0, 5.0, 0.95);
-
-insert into reading (server_ulid, timestamp, temperature, humidity, voltage, `current`)
-values ('server123', '2025-03-28 22:00:00', 39.0, 28.0, 5.1, 1.0);
-
-insert into reading (server_ulid, timestamp, temperature, humidity, voltage, `current`)
-values ('server123', '2025-03-28 23:00:00', 40.0, 27.0, 5.2, 1.05);
+INSERT INTO reading (server_ulid, timestamp_ms, temperature, humidity, voltage, current)
+VALUES
+-- Dia 1
+('server123', '2025-04-28 00:00:00', 30.0, 35.0, 5.0, 0.5),
+('server123', '2025-04-28 00:15:00', 30.5, 35.5, 5.1, 0.6),
+('server123', '2025-04-28 00:30:00', 31.0, 36.0, 5.2, 0.7),
+('server123', '2025-04-28 00:45:00', 31.5, 36.5, 5.3, 0.8),
+('server123', '2025-04-28 01:00:00', 32.0, 37.0, 5.4, 0.9),
+('server123', '2025-04-28 01:15:00', 32.5, 37.5, 5.5, 1.0),
+('server123', '2025-04-28 01:30:00', 33.0, 38.0, 5.6, 1.1),
+('server123', '2025-04-28 01:45:00', 33.5, 38.5, 5.7, 1.2),
+('server123', '2025-04-28 02:00:00', 34.0, 39.0, 5.8, 1.3),
+('server123', '2025-04-28 02:15:00', 34.5, 39.5, 5.9, 1.4),
+-- Dia 2
+('server123', '2025-05-28 02:30:00', 35.0, 40.0, 6.0, 1.5),
+('server123', '2025-05-28 02:45:00', 35.5, 40.5, 6.1, 1.6),
+('server123', '2025-05-28 03:00:00', 36.0, 41.0, 6.2, 1.7),
+('server123', '2025-05-28 03:15:00', 36.5, 41.5, 6.3, 1.8),
+('server123', '2025-05-28 03:30:00', 37.0, 42.0, 6.4, 1.9),
+('server123', '2025-05-28 03:45:00', 37.5, 42.5, 6.5, 2.0),
+('server123', '2025-05-28 04:00:00', 38.0, 43.0, 6.6, 2.1),
+('server123', '2025-05-28 04:15:00', 38.5, 43.5, 6.7, 2.2),
+('server123', '2025-05-28 04:30:00', 39.0, 44.0, 6.8, 2.3),
+('server123', '2025-05-28 04:45:00', 39.5, 44.5, 6.9, 2.4),
+('server123', '2025-05-28 05:00:00', 40.0, 45.0, 7.0, 2.5),
+('server123', '2025-05-28 05:15:00', 40.5, 45.5, 7.1, 2.6),
+('server123', '2025-05-28 05:30:00', 41.0, 46.0, 7.2, 2.7),
+-- Dia 3
+('server123', '2025-06-28 02:30:00', 35.0, 40.0, 6.0, 1.5),
+('server123', '2025-06-28 02:45:00', 35.5, 40.5, 6.1, 1.6),
+('server123', '2025-06-28 03:00:00', 36.0, 41.0, 6.2, 1.7),
+('server123', '2025-06-28 03:15:00', 36.5, 41.5, 6.3, 1.8),
+('server123', '2025-06-28 03:30:00', 37.0, 42.0, 6.4, 1.9),
+('server123', '2025-06-28 03:45:00', 37.5, 42.5, 6.5, 2.0),
+('server123', '2025-06-28 04:00:00', 38.0, 43.0, 6.6, 2.1),
+('server123', '2025-06-28 04:15:00', 38.5, 43.5, 6.7, 2.2),
+('server123', '2025-06-28 04:30:00', 39.0, 44.0, 6.8, 2.3),
+('server123', '2025-06-28 04:45:00', 39.5, 44.5, 6.9, 2.4),
+('server123', '2025-06-28 05:00:00', 40.0, 45.0, 7.0, 2.5),
+('server123', '2025-06-28 05:15:00', 40.5, 45.5, 7.1, 2.6),
+('server123', '2025-06-28 05:30:00', 41.0, 46.0, 7.2, 2.7);
 
 
-insert into reading (server_ulid, timestamp, temperature, humidity, voltage, `current`)
-values ('server123', '2025-04-28 00:00:00', 22.5, 45.0, 3.3, 0.2);
-
-insert into reading (server_ulid, timestamp, temperature, humidity, voltage, `current`)
-values ('server123', '2025-04-28 01:00:00', 21.0, 50.0, 3.3, 0.3);
-
-insert into reading (server_ulid, timestamp, temperature, humidity, voltage, `current`)
-values ('server123', '2025-04-28 02:00:00', 20.0, 48.5, 3.2, 0.25);
-
-insert into reading (server_ulid, timestamp, temperature, humidity, voltage, `current`)
-values ('server123', '2025-04-28 03:00:00', 19.5, 47.0, 3.1, 0.28);
-
-insert into reading (server_ulid, timestamp, temperature, humidity, voltage, `current`)
-values ('server123', '2025-04-28 04:00:00', 20.5, 49.0, 3.3, 0.3);
-
-insert into reading (server_ulid, timestamp, temperature, humidity, voltage, `current`)
-values ('server123', '2025-04-28 05:00:00', 22.0, 46.5, 3.4, 0.2);
-
-insert into reading (server_ulid, timestamp, temperature, humidity, voltage, `current`)
-values ('server123', '2025-04-28 06:00:00', 23.0, 44.0, 3.5, 0.3);
-
-insert into reading (server_ulid, timestamp, temperature, humidity, voltage, `current`)
-values ('server123', '2025-04-28 07:00:00', 24.0, 43.0, 3.6, 0.4);
-
-insert into reading (server_ulid, timestamp, temperature, humidity, voltage, `current`)
-values ('server123', '2025-04-28 08:00:00', 25.0, 42.0, 3.7, 0.4);
-
-insert into reading (server_ulid, timestamp, temperature, humidity, voltage, `current`)
-values ('server123', '2025-04-28 09:00:00', 26.0, 41.5, 3.8, 0.45);
-
-insert into reading (server_ulid, timestamp, temperature, humidity, voltage, `current`)
-values ('server123', '2025-04-28 10:00:00', 27.0, 40.0, 3.9, 0.5);
-
-insert into reading (server_ulid, timestamp, temperature, humidity, voltage, `current`)
-values ('server123', '2025-04-28 11:00:00', 28.0, 39.0, 4.0, 0.5);
-
-insert into reading (server_ulid, timestamp, temperature, humidity, voltage, `current`)
-values ('server123', '2025-04-28 12:00:00', 29.0, 38.0, 4.1, 0.55);
-
-insert into reading (server_ulid, timestamp, temperature, humidity, voltage, `current`)
-values ('server123', '2025-04-28 13:00:00', 30.0, 37.5, 4.2, 0.6);
-
-insert into reading (server_ulid, timestamp, temperature, humidity, voltage, `current`)
-values ('server123', '2025-04-28 14:00:00', 31.0, 36.5, 4.3, 0.6);
-
-insert into reading (server_ulid, timestamp, temperature, humidity, voltage, `current`)
-values ('server123', '2025-04-28 15:00:00', 32.0, 35.5, 4.4, 0.65);
-
-insert into reading (server_ulid, timestamp, temperature, humidity, voltage, `current`)
-values ('server123', '2025-04-28 16:00:00', 33.0, 34.5, 4.5, 0.7);
-
-insert into reading (server_ulid, timestamp, temperature, humidity, voltage, `current`)
-values ('server123', '2025-04-28 17:00:00', 34.0, 33.0, 4.6, 0.75);
-
-insert into reading (server_ulid, timestamp, temperature, humidity, voltage, `current`)
-values ('server123', '2025-04-28 18:00:00', 35.0, 32.0, 4.7, 0.8);
-
-insert into reading (server_ulid, timestamp, temperature, humidity, voltage, `current`)
-values ('server123', '2025-04-28 19:00:00', 36.0, 31.5, 4.8, 0.85);
-
-insert into reading (server_ulid, timestamp, temperature, humidity, voltage, `current`)
-values ('server123', '2025-04-28 20:00:00', 37.0, 30.0, 4.9, 0.9);
-
-insert into reading (server_ulid, timestamp, temperature, humidity, voltage, `current`)
-values ('server123', '2025-04-28 21:00:00', 38.0, 29.0, 5.0, 0.95);
-
-insert into reading (server_ulid, timestamp, temperature, humidity, voltage, `current`)
-values ('server123', '2025-04-28 22:00:00', 39.0, 28.0, 5.1, 1.0);
-
-insert into reading (server_ulid, timestamp, temperature, humidity, voltage, `current`)
-values ('server123', '2025-04-28 23:00:00', 40.0, 27.0, 5.2, 1.05);
-
+select * from reading;

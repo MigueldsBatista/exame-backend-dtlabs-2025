@@ -5,8 +5,11 @@ pydantic
 psycopg2-binary
 sqlalchemy
 python-dotenv
-jwt
+
 passlib[bcrypt]
+python-jose[cryptography]
+python-multipart
+
 ulid-py
 pytest
 httpx

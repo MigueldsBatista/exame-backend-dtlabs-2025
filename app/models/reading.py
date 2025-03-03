@@ -1,5 +1,6 @@
-from sqlalchemy import Column, Integer, String, DateTime, Float, ForeignKey
+from sqlalchemy import CheckConstraint, Column, Integer, String, DateTime, Float, ForeignKey
 from models.base_model import Base
+from sqlalchemy.orm import relationship
 
 class Reading(Base):
     __tablename__ = 'reading'
@@ -12,12 +13,25 @@ class Reading(Base):
     voltage = Column(Float)
     current = Column(Float)
 
+    
+    __table_args__ = (
+        CheckConstraint(
+            """
+            (humidity IS NOT NULL AND humidity > 0 AND humidity <= 100) OR
+            (temperature IS NOT NULL) OR
+            (voltage IS NOT NULL AND voltage >= 0) OR
+            (current IS NOT NULL AND current >= 0)
+            """,
+            name='has_any_reading'
+        ),
+    )
+
     def __str__(self):
         return f"""
         Reading(server_ulid={self.server_ulid},\n
-        timestamp={self.timestamp},\n
+        timestamp={self.timestamp_ms},\n
         temperature={self.temperature},\n
         humidity={self.humidity},\n
-        oltage={self.voltage},\n
+        voltage={self.voltage},\n
         current={self.current})\n
         """
