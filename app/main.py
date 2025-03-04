@@ -3,7 +3,6 @@ from routes import auth_routes, server_routes, reading_routes
 import uvicorn
 from exceptions.handler import register_exception_handlers
 from middlewares import register_middlewares
-from fastapi.openapi.utils import get_openapi
 
 # Create FastAPI app with improved OpenAPI documentation
 app = FastAPI(
