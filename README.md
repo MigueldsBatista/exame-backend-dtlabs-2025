@@ -1,6 +1,21 @@
-# FastAPI with PostgreSQL in Docker
+# IoT Server Monitoring API
 
-This project is a FastAPI application connected to a PostgreSQL database, running in Docker containers.
+A FastAPI application for managing IoT servers and sensor data, running with PostgreSQL in Docker containers.
+
+## Project Overview
+
+This system enables:
+- Registration and management of IoT servers
+- Collection of sensor data (temperature, humidity, voltage, current)
+- Real-time server health monitoring
+- User authentication and authorization
+- Data aggregation and analysis
+
+## System Architecture
+
+- **Backend API**: FastAPI application handling requests and business logic
+- **Database**: PostgreSQL storing server information and sensor readings
+- **API Sender Service**: Utility for simulating IoT device requests
 
 ## Prerequisites
 
@@ -50,8 +65,21 @@ This project is a FastAPI application connected to a PostgreSQL database, runnin
     - Run the FastAPI application
 
 3. **Access the application**:
-    - FastAPI at [http://host.docker.internal:8000](http://host.docker.internal:8000)
-    - Interactive documentation at [http://host.docker.internal:8000/docs](http://host.docker.internal:8000/docs)
+    - API at [http://localhost:8000](http://localhost:8000)
+    - Interactive API documentation at [http://localhost:8000/docs](http://localhost:8000/docs)
+    - Alternative documentation at [http://localhost:8000/redoc](http://localhost:8000/redoc)
+
+## API Testing with API Sender Service
+
+The project includes an API sender service in the `api_consumer` directory that can simulate IoT device requests:
+
+### Features:
+- Simulates multiple IoT servers sending data
+- Configurable request frequency (1-10 Hz)
+- Random or specified sensor data generation
+- Authentication handling
+
+### Running the API Sender:
 
 ## Useful Commands
 
