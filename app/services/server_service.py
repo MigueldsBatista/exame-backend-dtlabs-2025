@@ -1,65 +1,68 @@
 from sqlalchemy.orm import Session
-from exceptions.custom import NotFoundException
+from exceptions.custom_exceptions import NotFoundException
 from repository.server_repository import ServerRepository
-from schemas.server_schema import ServerResponse, ServerStatusResponse
-from schemas.server_schema import PostServer
-from mappers.server_mapper import ServerMapper
+from models.server import Server
 
 
 class ServerService:
 
     def __init__(self, db: Session):
-        """Initialize the service with a database session."""
-        self.db = db
-        self.server_repository = ServerRepository(db)
+        """Initialize the service with a repository."""
+        self.repository = ServerRepository(db)
         
-    def save(self, data: PostServer) -> ServerResponse:
-        if not data:
+    def save(self, server: Server) -> Server:
+        if not server:
             raise ValueError("Server cannot be None")
         
-        entity = ServerMapper.from_post_to_entity(data)
-        self.server_repository.save(entity)
-        return ServerMapper.from_entity_to_response(entity)
+        return self.repository.save(server)
 
+    def find_by_name(self, server_name: str) -> Server:
+        if not server_name:
+            raise ValueError("Server name cannot be None")
+        
+        return self.repository.find_by_name(server_name)
 
     def find_all(self) -> list:
-        return self.server_repository.find_all()
+        entities= self.repository.find_all()
+        return entities if entities else []
     
-    def find_by_id(self, id: int) -> ServerResponse:
-        entity = self.server_repository.find_by_id(id)
-        if not entity:
-            return None
-        return ServerMapper.from_entity_to_response(entity)
+    def find_by_id(self, id: int) -> Server:
+        if not id:
+            raise ValueError("Id cannot be None")
+        
+        return self.repository.find_by_id(id)
+
     
     def delete_by_id(self, id: int) -> bool:
-        return self.server_repository.delete(id)
-    
-    
-    def _get_server_health(self, server_id: int= None) -> ServerStatusResponse:
-        if server_id is None:
-            servers = self.server_repository.get_server_health()
-
-            return ServerMapper.from_tuples_to_responses(servers)
+        if not id:
+            raise ValueError("Id cannot be None")
         
-        entity = self.server_repository.find_by_id(server_id)
+        return self.repository.delete(id)
+    
+    
+    def _get_server_health(self, server_id: int= None, user_id :int =None) -> Server:
+        if server_id is None and user_id is not None:
+            return self.repository.get_server_health(user_id=user_id)
+
+        
+        entity = self.repository.find_by_id(server_id)
         if entity is None:
             raise NotFoundException(f"Entity with id: {server_id} not found")
         
-        server_status = self.server_repository.get_server_health(entity.id)
+        return self.repository.get_server_health(server_ulid=entity.id)
         
-        #Maybe the server has never been online and never recived readings
-        if len(server_status) == 0:
-            return ServerStatusResponse(
-                server_ulid=entity.id,
-                server_name=entity.server_name,
-                status="offline"
-            )
-        
-        return ServerMapper.from_tuple_to_response(server_status[0])#Always one element in the list
 
-    def get_server_health_all(self) -> list:
-
-        return self._get_server_health()
+    def get_server_health_all(self, user_id: str) -> list:
+        """Get health data for all servers created by the specified user"""
+        return self.repository.get_server_health_all(user_id=user_id)
     
-    def get_server_health_by_id(self, server_id: int) -> ServerStatusResponse:
-        return self._get_server_health(server_id)
+    def get_server_health_by_id(self, server_id: str) -> list:
+        """Get health data for a specific server by ID"""
+        if not server_id:
+            raise ValueError("Server ID cannot be None")
+        
+        entity = self.find_by_id(server_id)
+        if entity is None:
+            raise NotFoundException(f"Server with id: {server_id} not found")
+        
+        return self.repository.get_server_health_by_id(server_id)

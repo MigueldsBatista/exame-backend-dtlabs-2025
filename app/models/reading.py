@@ -7,7 +7,7 @@ class Reading(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     server_ulid = Column(String(26), ForeignKey('server.id'), nullable=False)
-    timestamp_ms = Column(DateTime, nullable=False,)
+    timestamp = Column(DateTime, nullable=False,)
     temperature = Column(Float)
     humidity = Column(Float)
     voltage = Column(Float)
@@ -29,7 +29,7 @@ class Reading(Base):
     def __str__(self):
         return f"""
         Reading(server_ulid={self.server_ulid},\n
-        timestamp={self.timestamp_ms},\n
+        timestamp={self.timestamp},\n
         temperature={self.temperature},\n
         humidity={self.humidity},\n
         voltage={self.voltage},\n

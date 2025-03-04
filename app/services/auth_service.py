@@ -1,38 +1,19 @@
-from fastapi.security import OAuth2PasswordBearer
-from passlib.context import CryptContext
 from datetime import datetime, timedelta, timezone
 
-from exceptions.custom import UnauthorizedException
+from services.user_service import UserService
+from exceptions.custom_exceptions import UnauthorizedException
 from core.settings import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 
 from jose import jwt
-#claim error
-from jose.exceptions import JWTClaimsError
-from jose.exceptions import JWTError
-from jose.exceptions import ExpiredSignatureError
-
-
-# Inicialização do contexto de criptografia
-password_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-
-# Funções auxiliares
-def get_password_hash(password: str) -> str:
-    return password_context.hash(password)
-
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-
-    return password_context.verify(plain_password, hashed_password)
+from jose.exceptions import JWTClaimsError, JWTError, ExpiredSignatureError
+from utils.password_utils import verify_password
+from models.user import User
 
 def create_access_token(data: dict, expires_delta: timedelta = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)) -> str:
     to_encode = data.copy()
-
     expire = datetime.now(timezone.utc) + expires_delta
-
     to_encode.update({"exp": expire})
-
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-
     return encoded_jwt
 
 def decode_access_token(token: str) -> dict:
@@ -48,4 +29,16 @@ def decode_access_token(token: str) -> dict:
     
     except JWTError:
         raise UnauthorizedException("Could not validate token")
-    
+
+def authenticate_user(username: str, password: str, user_service: UserService) -> bool:
+    saved_user = user_service.find_by_username(username)
+    if not saved_user or not verify_password(password, saved_user.password):
+        return False
+    return True
+
+def get_current_user(token: str, user_service: UserService) -> User:
+    user = decode_access_token(token)["sub"]
+    stored_user = user_service.find_by_username(user)
+    if not stored_user:
+        return None
+    return stored_user

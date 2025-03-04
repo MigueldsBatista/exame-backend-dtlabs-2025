@@ -1,10 +1,12 @@
 import pytest
 from fastapi import status
-from app.schemas.reading_schema import PostReading, GetReading
+from app.mappers.reading_mapper import ReadingMapper
+from app.schemas.reading_schema import PostReading, GetReadingParams
 from app.services.reading_service import ReadingService
 import datetime
+from .conftest import _create_test_data_for_aggregations
 
-def post_invalid_reading(authenticated_client, db):
+def test_post_invalid_reading(authenticated_client, db):
     response = authenticated_client.post("/servers", json={"server_name": "Dolly 1"})
     server_ulid = response.json()["server_ulid"]
 
@@ -12,20 +14,32 @@ def post_invalid_reading(authenticated_client, db):
         "server_ulid": server_ulid,
         "timestamp": "2025-10-01T12:00:00Z"
     })
+    #The reading must contain at least one of the following fields: temperature, humidity, current, voltage
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
+def test_get_reading_not_logged_in(authenticated_client, db):
+    authenticated_client.headers = {}
+    response = authenticated_client.get("/data")
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+
+def test_get_invalid_date_range_reading(authenticated_client, db):
+    response = authenticated_client.get("/data", params={"start_time": "2025-10-01T12:00:00Z", "end_time": "2025-10-01T11:00:00Z"})
+    #The start time must be before the end time
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+    assert "Start time cannot be after end time" in response.json()["detail"]
+    
 
 def test_post_reading(authenticated_client, db):
 
     response = authenticated_client.post("/servers", json={"server_name": "Dolly 1"})
+    
     server_ulid = response.json()["server_ulid"]
-
     response = authenticated_client.post("/data", json={
         "server_ulid": server_ulid,
         "temperature": 25.5,
         "timestamp": "2025-10-01T12:00:00Z"
     })
-
     assert response.status_code == status.HTTP_201_CREATED
     server_ulid = response.json()["server_ulid"]
     assert server_ulid is not None
@@ -36,8 +50,11 @@ def test_save_reading(authenticated_client, db):
 
     reading_service = ReadingService(db)
 
-    reading = PostReading(server_ulid=server_ulid, temperature=25.5, timestamp="2025-10-01T12:00:00Z")
-    response = reading_service.save(reading)
+    post_reading = PostReading(server_ulid=server_ulid, temperature=25.5, timestamp="2025-10-01T12:00:00Z")
+
+    reading_entity = ReadingMapper.from_post_to_entity(post_reading)
+    
+    response = reading_service.save(reading_entity)
 
     assert response.server_ulid == server_ulid
     assert response.temperature == 25.5
@@ -50,11 +67,6 @@ def test_save_reading(authenticated_client, db):
 def test_get_readings(authenticated_client, db):
     response = authenticated_client.get("/data")
     assert response.status_code == status.HTTP_200_OK
-
-def test_get_reading_not_logged_in(authenticated_client, db):
-    authenticated_client.headers = {}
-    response = authenticated_client.get("/data")
-    assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 def test_get_filtered_server_readings(authenticated_client, db):
@@ -132,8 +144,8 @@ def test_get_filtered_interval_readings(authenticated_client, db):
         "voltage": 221.0
     })
     
-    # Filter for readings between 12:45:01 and 13:00:00
-    filters = {"server_ulid": server_ulid1, "start_time": "2025-10-01T12:45:01Z", "end_time": "2025-10-01T13:00:00Z"}
+    # Filter for readings between 12:30:01 and 13:00:00
+    filters = {"server_ulid": server_ulid1, "start_time": "2025-10-01T12:30:01Z", "end_time": "2025-10-01T13:00:00Z"}
 
     response = authenticated_client.get("/data", params=filters)
 
@@ -228,58 +240,3 @@ def test_get_aggregated_values_by_minute(authenticated_client, db):
     assert len(minute_entries) == 1
     assert minute_entries[0]["temperature"] == 28.0
     
-
-
-def _create_test_data_for_aggregations(authenticated_client):
-    """Helper function to create test data for aggregation tests"""
-    response = authenticated_client.post("/servers", json={"server_name": "Dolly Aggregation"})
-    server_ulid = response.json()["server_ulid"]
-    
-    # Day 1
-    authenticated_client.post("/data", json={
-        "server_ulid": server_ulid,
-        "temperature": 25.0,
-        "timestamp": "2025-10-01T13:00:00Z",
-        "humidity": 70.0,
-        "current": 1.0,
-        "voltage": 220.0
-    })
-    
-    authenticated_client.post("/data", json={
-        "server_ulid": server_ulid,
-        "temperature": 26.5,
-        "timestamp": "2025-10-01T14:00:00Z",
-        "humidity": 71.0,
-        "current": 1.1,
-        "voltage": 221.0
-    })
-    
-    # Day 2
-    authenticated_client.post("/data", json={
-        "server_ulid": server_ulid,
-        "temperature": 27.0,
-        "timestamp": "2025-10-02T12:00:00Z",
-        "humidity": 72.0,
-        "current": 1.2,
-        "voltage": 222.0
-    })
-    
-    authenticated_client.post("/data", json={
-        "server_ulid": server_ulid,
-        "temperature": 27.5,
-        "timestamp": "2025-10-02T13:00:00Z",
-        "humidity": 73.0,
-        "current": 1.3,
-        "voltage": 223.0
-    })
-    
-    authenticated_client.post("/data", json={
-        "server_ulid": server_ulid,
-        "temperature": 28.0,
-        "timestamp": "2025-10-02T13:01:00Z",
-        "humidity": 74.0, 
-        "current": 1.4,
-        "voltage": 224.0
-    })
-    
-    return server_ulid

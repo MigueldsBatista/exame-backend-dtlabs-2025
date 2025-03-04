@@ -1,3 +1,4 @@
+from typing import List, Tuple
 from sqlalchemy import text, case, func, select, join
 from repository.base_repository import BaseRepository
 from models.server import Server
@@ -18,27 +19,43 @@ class ServerRepository(BaseRepository[Server]):
             obj.id = str(ulid.new())
         return super().save(obj)
     
-    def get_server_health(self, server_ulid: str = None):
+    def get_server_health(self, server_ulid: str = None, user_id: str = None):
         # Calculate the threshold time for "online" status (10 seconds ago)
         threshold_time = datetime.now() - timedelta(seconds=10)
         
         # Build query using SQLAlchemy expressions
         query = (
             self.db.query(
-                Reading.server_ulid,
+                Server.id,
                 case(
-                    (func.max(Reading.timestamp_ms) >= threshold_time, 'online'),
+                    (func.max(Reading.timestamp) >= threshold_time, 'online'),
                     else_='offline'
                 ).label('status'),
                 Server.server_name
             )
-            .join(Server, Server.id == Reading.server_ulid)
-            .group_by(Reading.server_ulid, Server.server_name)
-            .order_by(func.max(Reading.timestamp_ms).asc())
+            .outerjoin(Reading, Server.id == Reading.server_ulid)
+            .group_by(Server.id, Server.server_name)
+            .order_by(func.max(Reading.timestamp).asc())
         )
         
         # Apply server_ulid filter if provided
         if server_ulid:
             query = query.filter(Reading.server_ulid == server_ulid)
-        
+            
+        if user_id:
+            query = query.filter(Server.created_by == user_id)
+            
         return query.all()
+    
+
+        
+    def get_server_health_all(self, user_id: str = None) -> List[Tuple]:
+        """Get health data for all servers, optionally filtered by user"""
+        return self.get_server_health(user_id=user_id)
+    
+    def get_server_health_by_id(self, server_id: str) -> List[Tuple]:
+        """Get health data for a specific server"""
+        return self.get_server_health(server_ulid=server_id)
+    
+    def find_by_name(self, server_name: str):
+        return self.db.query(Server).filter(Server.server_name == server_name).first()

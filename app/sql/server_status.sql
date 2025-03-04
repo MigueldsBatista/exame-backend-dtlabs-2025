@@ -1,11 +1,11 @@
 SELECT
     server_ulid,
     server.server_name,
-        -- TO_CHAR(MAX(timestamp_ms), 'DD/MM/YYYY') AS last_reading,   
+        -- TO_CHAR(MAX(timestamp), 'DD/MM/YYYY') AS last_reading,   
         -- TO_CHAR(NOW(), 'DD/MM/YYYY') as current_date,
-        -- MAX(timestamp_ms) - NOW(),
+        -- MAX(timestamp) - NOW(),
         CASE
-        WHEN MAX(timestamp_ms) >= NOW() - INTERVAL '10 second' THEN 'online'
+        WHEN MAX(timestamp) >= NOW() - INTERVAL '10 second' THEN 'online'
         ELSE 'offline'
     END AS status
 FROM
@@ -15,6 +15,6 @@ inner join server on server.id=reading.server_ulid
 GROUP BY
     server_ulid, server_name
 ORDER BY
-    MAX(timestamp_ms) asc;
+    MAX(timestamp) asc;
 
     

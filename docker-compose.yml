@@ -4,8 +4,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: dtlabs-backend
-    labels:
-      - "author=Miguel Batista"
+
     restart: always
     ports:
       - "8000:8000"
@@ -19,7 +18,7 @@ services:
       - dtlabs-network
     volumes:
       - ./app:/app
-    command: uvicorn main:app --host 0.0.0.0 --port 8000
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --workers 4
 
   db:
     image: postgres:15-alpine

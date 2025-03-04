@@ -1,75 +1,75 @@
-# FastAPI com PostgreSQL no Docker
+# FastAPI with PostgreSQL in Docker
 
-Este projeto é uma aplicação FastAPI conectada a um banco de dados PostgreSQL, rodando em contêineres Docker.
+This project is a FastAPI application connected to a PostgreSQL database, running in Docker containers.
 
-## Pré-requisitos
+## Prerequisites
 
-- Docker instalado ([Instalação do Docker](https://docs.docker.com/get-docker/))
-- Docker Compose instalado ([Instalação do Docker Compose](https://docs.docker.com/compose/install/))
+- Docker installed ([Docker Installation](https://docs.docker.com/get-docker/))
+- Docker Compose installed ([Docker Compose Installation](https://docs.docker.com/compose/install/))
 
-## Configuração do Ambiente
+## Environment Configuration
 
-1. **Configure as variáveis de ambiente**:
+1. **Configure environment variables**:
 
-   Copie o arquivo `.env.example` para `.env`:
+   Copy the `.env.example` file to `.env`:
    ```bash
    cp .env.example .env
    ```
 
-   Edite o arquivo `.env` com suas configurações:
+   Edit the `.env` file with your settings:
    ```properties
    # Database credentials
    DB_USER=postgres
-   DB_PASSWORD=sua_senha_segura
+   DB_PASSWORD=your_secure_password
    DB_NAME=dtlabs
-   SECRET_KEY=sua_chave_secreta_muito_longa_e_segura
+   SECRET_KEY=your_very_long_and_secure_secret_key
    ALGORITHM=HS256
    ACCESS_TOKEN_EXPIRE_MINUTES=60
    ENV=Docker
    DB_HOST=db
    ```
    
-   **Importante**: Substitua os valores padrão por valores seguros em ambientes de produção.
+   **Important**: Replace default values with secure ones in production environments.
 
-## Como Rodar o Projeto
+## How to Run the Project
 
-1. **Clone o repositório**:
+1. **Clone the repository**:
     ```bash
     git clone https://github.com/MigueldsBatista/exame-backend-dtlabs-2025.git
     cd exame-backend-dtlabs-2025
     ```
 
-2. **Construa e rode os contêineres**:
+2. **Build and run the containers**:
     ```bash
     docker-compose up --build
     ```
 
-    Isso irá:
-    - Construir a imagem da aplicação FastAPI
-    - Iniciar o banco de dados PostgreSQL
-    - Rodar a aplicação FastAPI
+    This will:
+    - Build the FastAPI application image
+    - Start the PostgreSQL database
+    - Run the FastAPI application
 
-3. **Acesse a aplicação**:
-    - FastAPI em [http://localhost:8000](http://localhost:8000)
-    - Documentação interativa em [http://localhost:8000/docs](http://localhost:8000/docs)
+3. **Access the application**:
+    - FastAPI at [http://localhost:8000](http://localhost:8000)
+    - Interactive documentation at [http://localhost:8000/docs](http://localhost:8000/docs)
 
-## Comandos Úteis
+## Useful Commands
 
-| Comando | Descrição |
-|---------|-----------|
-| `docker-compose ps` | Verificar contêineres em execução |
-| `docker-compose down` | Parar os contêineres |
-| `docker-compose down -v` | Remover contêineres e volumes |
-| `docker-compose logs app` | Ver logs da aplicação |
-| `docker-compose logs db` | Ver logs do banco de dados |
-| `docker-compose exec app bash` | Acessar o shell do contêiner da aplicação |
-| `docker-compose exec db psql -U meu_usuario -d meu_banco` | Acessar o shell do banco de dados |
+| Command | Description |
+|---------|-------------|
+| `docker-compose ps` | Check running containers |
+| `docker-compose down` | Stop containers |
+| `docker-compose down -v` | Remove containers and volumes |
+| `docker-compose logs app` | View application logs |
+| `docker-compose logs db` | View database logs |
+| `docker-compose exec app bash` | Access the application container shell |
+| `docker-compose exec db psql -U my_user -d my_database` | Access the database shell |
 
-## Resolvendo Conflitos de Porta
+## Resolving Port Conflicts
 
-Se você já tem um PostgreSQL rodando na sua máquina e ele está usando a porta 5432:
+If you already have PostgreSQL running on your machine using port 5432:
 
-### Opção 1: Parar o PostgreSQL local
+### Option 1: Stop local PostgreSQL
 
 **Linux**:
 ```bash
@@ -82,16 +82,16 @@ brew services stop postgresql
 ```
 
 **Windows**:
-Pare o serviço PostgreSQL pelo "Services Manager"
+Stop the PostgreSQL service through "Services Manager"
 
-### Opção 2: Alterar a porta no docker-compose.yml
+### Option 2: Change the port in docker-compose.yml
 
 ```yaml
 ports:
   - "5433:5432"
 ```
 
-## Verificar a conexão co o banco de dados
+## Verify database connection
 ```bash
 docker-compose exec app psql -h db -U postgres -d dtlabs
 ```

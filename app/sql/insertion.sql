@@ -1,6 +1,5 @@
-delete from reading;
 
-INSERT INTO reading (server_ulid, timestamp_ms, temperature, humidity, voltage, current)
+INSERT INTO reading (server_ulid, timestamp, temperature, humidity, voltage, current)
 VALUES
 -- Dia 1
 ('server123', '2025-04-28 00:00:00', 30.0, 35.0, 5.0, 0.5),

@@ -1,9 +1,8 @@
 from models.user import User
-from schemas.auth_schema import PostUser, UserResponse
+from schemas.user_schema import PostUser, UserResponse
 
 
 class UserMapper:
-
 
     @staticmethod
     def from_entity_to_response(entity: User) -> UserResponse:

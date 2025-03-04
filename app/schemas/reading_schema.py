@@ -4,7 +4,7 @@ from core.enums import SensorType, AggregationType
 from datetime import datetime
 import iso8601
 
-class GetReading(BaseModel):
+class GetReadingParams(BaseModel):
     """Schema for retrieving reading data with optional filters
     This schema is used to structure the query parameters when retrieving reading data."""
     server_ulid: Optional[str] = None  # The unique identifier of the server
@@ -41,8 +41,18 @@ class GetReading(BaseModel):
         except ValueError as e:
             raise ValueError(f"Invalid aggregation type: {value}") from e
 
+    @model_validator(mode='after')
+    def validate_time_range(self):
+        """Validate that start_time is before end_time when both are present"""
+        if self.start_time is not None and self.end_time is not None:
+            if self.start_time > self.end_time:
+                raise ValueError("Start time cannot be after end time")
+        return self
+
+      
+
     def __str__(self):
-        return f"GetReading(server_ulid={self.server_ulid}, sensor_type={self.sensor_type}, aggregation={self.aggregation}, start_time={self.start_time}, end_time={self.end_time})"
+        return f"GetReadingParams(server_ulid={self.server_ulid}, sensor_type={self.sensor_type}, aggregation={self.aggregation}, start_time={self.start_time}, end_time={self.end_time})"
 
 #-----------------------------------------------------------------------
 

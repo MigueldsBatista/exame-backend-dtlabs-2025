@@ -1,6 +1,8 @@
 # Add this to your .gitignore file to avoid committing sensitive information
 .env
 __pycache__/
+**/__pycache__/
+.pytest_cache/
 *.py[cod]
 *$py.class
 *.so
