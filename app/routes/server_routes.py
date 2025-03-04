@@ -1,19 +1,42 @@
 from fastapi import status, Depends, APIRouter
+from schemas.error_schema import ConflictError, UnauthorizedError, ValidationErrorDetail, NotFoundError
 from exceptions.custom_exceptions import ConflictException, NotFoundException
 from dependencies import get_current_user_dependency, get_server_service
 from schemas.user_schema import UserResponse
-from schemas.server_schema import PostServer
+from schemas.server_schema import PostServer, ServerStatusResponse, ServerResponse
 from services.server_service import ServerService
 from mappers.server_mapper import ServerMapper
 
-router = APIRouter()
+router = APIRouter(
+    tags=["Server Management"],
+)
 
-@router.post("/servers", status_code=status.HTTP_201_CREATED)
-async def post_server(
+@router.post(
+    "/servers", 
+    status_code=status.HTTP_201_CREATED,
+    summary="Register a new server",
+    description="""
+    Creates a new server in the system linked to the current user,
+    
+    - server_name: A unique name to identify the server
+
+    
+    """,
+    response_description="The created server details",
+    response_model=ServerResponse,
+        responses={
+        401: {"model": UnauthorizedError, "description": "Authentication required"},
+        409 :{"model": ConflictError, "description": "Conflict error"},
+        422 :{"model": ValidationErrorDetail, "description": "Validation error"}
+
+    }
+)
+async def create_server(
     server: PostServer,
     current_user: UserResponse = Depends(get_current_user_dependency),
     server_service: ServerService = Depends(get_server_service)
 ):
+
     if server_service.find_by_name(server.server_name):
         raise ConflictException("Server already exists")
 
@@ -23,12 +46,31 @@ async def post_server(
 
     return server_response
 
-@router.get("/health/all", status_code=status.HTTP_200_OK)
-async def get_health(
+@router.get(
+    "/health/all", 
+    status_code=status.HTTP_200_OK,
+    summary="Get health status of all servers",
+    description="""
+    Retrieve the health status for all servers associated with the current user.
+    
+    The health status includes:
+    - Server identifier
+    - Server name
+    - Current status (online/offline)
+    
+    A server is considered online if it has sent data within the last 10 seconds.
+    """,
+    response_description="List of servers with their health status",
+    response_model=list[ServerStatusResponse],
+    responses={
+        401: {"model": UnauthorizedError, "description": "Authentication required"},        
+    }
+)
+async def get_all_server_health(
         current_user: UserResponse = Depends(get_current_user_dependency),
         server_service: ServerService = Depends(get_server_service)
         ):
-    
+
     all_server_status = server_service.get_server_health_all(user_id=current_user.id)
     
     if not all_server_status:
@@ -38,7 +80,31 @@ async def get_health(
 
     return server_status_responses
 
-@router.get("/health/{server_id}", status_code=status.HTTP_200_OK)
+@router.get(
+    "/health/{server_id}", 
+    status_code=status.HTTP_200_OK,
+    summary="Get health status of a specific server",
+    description="""
+        Retrieve the health status for a specific server.
+        
+        Parameters:
+        - server_id: The unique identifier (ULID) of the server
+        
+        The health status includes:
+        - Server identifier
+        - Server name
+        - Current status (online/offline)
+        
+        A server is considered online if it has sent data within the last 10 seconds.
+        """,
+    response_description="Server health status details",
+    responses={
+        401: {"model": UnauthorizedError, "description": "Authentication required"},
+        422 :{"model": ValidationErrorDetail, "description": "Validation error"}
+        
+    },
+    response_model=ServerStatusResponse
+)
 async def get_server_health(
         server_id: str,
         current_user: UserResponse = Depends(get_current_user_dependency),

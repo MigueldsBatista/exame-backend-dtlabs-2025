@@ -1,6 +1,6 @@
 from starlette.middleware.base import BaseHTTPMiddleware
-from exceptions.handler import error_response_builder
 from fastapi import Request, status, FastAPI
+from schemas.error_schema import ErrorResponse
 import json
 import time
 from collections import defaultdict, deque
@@ -14,7 +14,12 @@ class JSONErrorMiddleware(BaseHTTPMiddleware):
                 try:
                     await request.json()
                 except json.JSONDecodeError as e:
-                   return error_response_builder(status.HTTP_400_BAD_REQUEST, f"Invalid JSON: {str(e)}", "json_error")
+                    error = ErrorResponse.create(
+                        detail=f"Invalid JSON: {str(e)}",
+                        type="json_decode_error",
+                        status_code=status.HTTP_400_BAD_REQUEST
+                    )
+                    return error.to_response()
                 
         return await call_next(request)
 
@@ -25,7 +30,6 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         self.window_size = window_size 
         self.request_history = defaultdict(lambda: deque())
         self.disabled = os.getenv("DISABLE_RATE_LIMIT", "false").lower() == "true"
-        print(self.disabled)
         
     def _get_client_id(self, request):
         device_id = request.headers.get("X-Device-ID")
@@ -56,13 +60,13 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
         client_id = self._get_client_id(request)
         
-
         if self._is_rate_limited(client_id):
-            return error_response_builder(
-                status.HTTP_429_TOO_MANY_REQUESTS,
-                f"Rate limit exceeded. Maximum allowed rate is {self.max_rate_hz}Hz.",
-                "rate_limit_exceeded"
+            error = ErrorResponse.create(
+                detail=f"Rate limit exceeded. Maximum allowed rate is {self.max_rate_hz}Hz.",
+                type="rate_limit_exceeded",
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS
             )
+            return error.to_response()
         
         return await call_next(request)
 

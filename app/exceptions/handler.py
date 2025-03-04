@@ -1,89 +1,136 @@
 from datetime import datetime
-from typing import Union
+from typing import Union, Dict, Any
 from fastapi import HTTPException, status, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 from sqlalchemy.exc import DataError, NoReferencedTableError, IntegrityError
 from psycopg2.errors import UniqueViolation, ForeignKeyViolation
 from exceptions.custom_exceptions import ConflictException, NotFoundException, UnauthorizedException
 from jose.exceptions import JWTClaimsError, ExpiredSignatureError, JWTError
 import json
 
-
-def error_response_builder(status_code, message, type, headers=None) -> JSONResponse:
-    return JSONResponse(
-        headers=headers,
-        status_code=status_code, content={
-        "type": type,
-        "status_code": status_code,
-        "detail": message,
-        "timestamp": datetime.now().isoformat()
-    })
+from schemas.error_schema import (
+    ErrorResponse,
+    ValidationErrorResponse,
+    NotFoundError,
+    ConflictError,
+    UnauthorizedError,
+    HTTPValidationError
+)
 
 
 async def generic_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-    return error_response_builder(status.HTTP_500_INTERNAL_SERVER_ERROR, f"Internal server error: {str(exc)}", "internal_server_error")
+    return ErrorResponse.create(
+        detail=f"Internal server error: {str(exc)}",
+        type="internal_server_error", 
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+    ).to_response()
+
 
 async def request_validation_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
-    error_messages = ", ".join(f"{err['msg']}: {err['loc']}" for err in exc.errors())
-    return error_response_builder(status.HTTP_422_UNPROCESSABLE_ENTITY, error_messages, "request_validation_error")
+    return ValidationErrorResponse.from_request_validation_error(
+        exc.errors()
+    ).to_response()
+
 
 async def validation_error_handler(request: Request, exc: ValidationError) -> JSONResponse:
-    error_messages = ", ".join(f"{err['msg']}: {err['loc']}" for err in exc.errors())
-    return error_response_builder(status.HTTP_422_UNPROCESSABLE_ENTITY, f"Validation failed: {error_messages}", "validation_error")
+    return ValidationErrorResponse.from_request_validation_error(
+        exc.errors()
+    ).to_response()
+
 
 async def value_error_handler(request: Request, exc: ValueError) -> JSONResponse:
-    # Handle ValueError directly without trying to access as a dictionary
-    return error_response_builder(status.HTTP_400_BAD_REQUEST, f"Validation failed: {str(exc)}", "value_error")
+    return HTTPValidationError.create(
+        detail=f"Validation failed: {str(exc)}",
+    ).to_response()
+
 
 async def data_error_handler(request: Request, exc: DataError) -> JSONResponse:
-    return error_response_builder(status.HTTP_400_BAD_REQUEST, f"Data error: {str(exc)}", "data_error")
+    return ErrorResponse.create(
+        detail=f"Data error: {str(exc)}",
+        type="data_error",
+        status_code=status.HTTP_400_BAD_REQUEST
+    ).to_response()
+
 
 async def database_error_handler(request: Request, exc: Union[NoReferencedTableError, IntegrityError]) -> JSONResponse:
-    return error_response_builder(status.HTTP_400_BAD_REQUEST, f"Invalid data: {str(exc)}", "database_error")
+    return ErrorResponse.create(
+        detail=f"Invalid data: {str(exc)}",
+        type="database_error",
+        status_code=status.HTTP_400_BAD_REQUEST
+    ).to_response()
+
 
 async def conflict_exception_handler(request: Request, exc: ConflictException) -> JSONResponse:
-    return error_response_builder(status.HTTP_409_CONFLICT, f"Conflict: {str(exc)}", "conflict_error")
+    return ConflictError.create(
+        detail=f"Conflict: {str(exc)}",
+    ).to_response()
+
 
 async def unauthorized_exception_handler(request: Request, exc: UnauthorizedException) -> JSONResponse:
-    return error_response_builder(status.HTTP_401_UNAUTHORIZED, f"Unauthorized: {str(exc)}", "unauthorized_error", {"WWW-Authenticate": "Bearer"})
+    return UnauthorizedError.create(
+        detail=f"Unauthorized: {str(exc)}",
+    ).to_response({"WWW-Authenticate": "Bearer"})
+
 
 async def invalid_token_handler(request: Request, exc: Union[JWTClaimsError, ExpiredSignatureError, JWTError]) -> JSONResponse:
-    return error_response_builder(status.HTTP_401_UNAUTHORIZED, f"Token error: {str(exc)}", "token_error", {"WWW-Authenticate": "Bearer"})
+    return UnauthorizedError.create(
+        detail=f"Token error: {str(exc)}",
+    ).to_response({"WWW-Authenticate": "Bearer"})
+
 
 async def handle_http_exception(request: Request, exc: HTTPException) -> JSONResponse:
-    return error_response_builder(exc.status_code, exc.detail, "http_exception")
+    return ErrorResponse.create(
+        detail=exc.detail,
+        type="http_exception",
+        status_code=exc.status_code
+    ).to_response()
+
 
 async def entry_not_found_handler(request: Request, exc: NotFoundException) -> JSONResponse:
-    return error_response_builder(status.HTTP_404_NOT_FOUND, f"Entry not found: {str(exc)}", "not_found_error")
+    return NotFoundError.create(
+        detail=f"Entry not found: {str(exc)}",
+    ).to_response()
+
 
 async def json_error_handler(request: Request, exc: json.JSONDecodeError) -> JSONResponse:
-    return error_response_builder(status.HTTP_400_BAD_REQUEST, f"Invalid JSON: {str(exc)}", "json_decode_error")
+    return ErrorResponse.create(
+        detail=f"Invalid JSON: {str(exc)}",
+        type="json_decode_error",
+        status_code=status.HTTP_400_BAD_REQUEST
+    ).to_response()
+
 
 async def handle_unique_violation(request: Request, exc: UniqueViolation) -> JSONResponse:
-    return error_response_builder(status.HTTP_409_CONFLICT, f"Conflict: {str(exc)}", "unique_violation_error")
+    return ConflictError.create(
+        detail=f"Conflict: {str(exc)}",
+    ).to_response()
+
 
 async def handle_foreign_key_violation(request: Request, exc: ForeignKeyViolation) -> JSONResponse:
-    return error_response_builder(status.HTTP_400_BAD_REQUEST, f"Invalid data: {str(exc)}", "foreign_key_violation_error")
+    return ErrorResponse.create(
+        detail=f"Invalid data: {str(exc)}",
+        type="foreign_key_violation_error",
+        status_code=status.HTTP_400_BAD_REQUEST
+    ).to_response()
 
-def register_exception_handlers(app : FastAPI):
 
-    app.exception_handler(RequestValidationError)(request_validation_handler)
-    app.exception_handler(ValidationError)(validation_error_handler)
-    app.exception_handler(ValueError)(value_error_handler)
-    app.exception_handler(DataError)(data_error_handler)
-    app.exception_handler(NoReferencedTableError)(database_error_handler)
-    app.exception_handler(IntegrityError)(database_error_handler)
-    app.exception_handler(ConflictException)(conflict_exception_handler)
-    app.exception_handler(UnauthorizedException)(unauthorized_exception_handler)
-
-    app.exception_handler(JWTClaimsError)(invalid_token_handler)
-    app.exception_handler(ExpiredSignatureError)(invalid_token_handler)
-    app.exception_handler(JWTError)(invalid_token_handler)
-        
-    app.exception_handler(HTTPException)(handle_http_exception)
-    
-    app.exception_handler(NotFoundException)(entry_not_found_handler)
-    #Needs to be the last one
-    app.exception_handler(Exception)(generic_exception_handler)
+def register_exception_handlers(app: FastAPI):
+    # Register the exception handlers
+    app.add_exception_handler(RequestValidationError, request_validation_handler)
+    app.add_exception_handler(ValidationError, validation_error_handler)
+    app.add_exception_handler(ValueError, value_error_handler)
+    app.add_exception_handler(DataError, data_error_handler)
+    app.add_exception_handler(NoReferencedTableError, database_error_handler)
+    app.add_exception_handler(IntegrityError, database_error_handler)
+    app.add_exception_handler(ConflictException, conflict_exception_handler)
+    app.add_exception_handler(UnauthorizedException, unauthorized_exception_handler)
+    app.add_exception_handler(JWTClaimsError, invalid_token_handler)
+    app.add_exception_handler(ExpiredSignatureError, invalid_token_handler)
+    app.add_exception_handler(JWTError, invalid_token_handler)
+    app.add_exception_handler(HTTPException, handle_http_exception)
+    app.add_exception_handler(NotFoundException, entry_not_found_handler)
+    app.add_exception_handler(json.JSONDecodeError, json_error_handler)
+    # This should be the last one
+    app.add_exception_handler(Exception, generic_exception_handler)

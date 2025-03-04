@@ -21,7 +21,7 @@ logger = logging.getLogger("data_sender")
 class ServerDataSender:
     def __init__(
         self,
-        api_url: str = "http://localhost:8000",
+        api_url: str = "http://host.docker.internal:8000",
         frequency: float = 1.0,
         num_servers: int = 1,
         username: str = "admin",
@@ -164,14 +164,33 @@ class ServerDataSender:
     async def _generate_reading(self, server_id: str) -> Dict[str, Any]:
         timestamp = datetime.now().isoformat()
         
+        # Initialize all readings as None
+        temperature = None
+        voltage = None
+        current = None
+        humidity = None
+        
+        # Make sure at least one reading is valid
+        all_none = True
+        while all_none:
+            temperature = round(random.uniform(0, 100), 2) if random.random() > 0.5 else None
+            voltage = round(random.uniform(0, 220), 2) if random.random() > 0.5 else None
+            current = round(random.uniform(0, 10), 2) if random.random() > 0.5 else None
+            humidity = round(random.uniform(0, 100), 2) if random.random() > 0.5 else None
+            
+            # Check if at least one reading is not None
+            all_none = (temperature is None and voltage is None and
+                   current is None and humidity is None)
+        
         reading = {
             "server_ulid": server_id,
             "timestamp": timestamp,
-            "temperature": round(random.uniform(0, 100), 2),
-            "voltage": round(random.uniform(0, 220), 2),
-            "current": round(random.uniform(0, 10), 2),
-            "humidity": round(random.uniform(0, 100), 2)
+            "temperature": temperature,
+            "voltage": voltage,
+            "current": current,
+            "humidity": humidity,
         }
+        
         return reading
     
     async def _send_reading(self, reading: Dict[str, Any]) -> bool:
@@ -233,7 +252,7 @@ class ServerDataSender:
 
 async def main():
     parser = argparse.ArgumentParser(description="Server data sender service")
-    parser.add_argument("--api-url", type=str, default="http://localhost:8000", help="Base URL of the API")
+    parser.add_argument("--api-url", type=str, default="http://host.docker.internal:8000", help="Base URL of the API")
     parser.add_argument("--frequency", type=float, default=1.0, help="Frequency in Hz (1-10)")
     parser.add_argument("--num-servers", type=int, default=1, help="Number of servers to create")
     parser.add_argument("--username", type=str, default="admin", help="Username for authentication")

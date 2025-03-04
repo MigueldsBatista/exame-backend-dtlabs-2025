@@ -68,7 +68,6 @@ def db():
 def set_test_env():
     """Set environment variables for testing."""
     os.environ["DISABLE_RATE_LIMIT"] = "true"
-    print(os.getenv("DISABLE_RATE_LIMIT"))
     yield
 
 

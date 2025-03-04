@@ -13,3 +13,6 @@ python-multipart
 ulid-py
 pytest
 httpx
+
+pytest-asyncio
+email-validator

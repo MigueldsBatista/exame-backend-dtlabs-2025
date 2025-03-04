@@ -28,10 +28,5 @@ DB_PASSWORD = get_env_variable("DB_PASSWORD")
 DB_HOST = get_env_variable("DB_HOST")
 DB_NAME = get_env_variable("DB_NAME")
 
-# DB_NAME = "postgres"
-# DB_HOST = "localhost"
-# DB_USER = "root"
-# DB_PASSWORD = "guel6102005"
-
 DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:5432/{DB_NAME}"
 

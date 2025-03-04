@@ -1,85 +1,131 @@
-# API Consumer Service for Server Metrics
+# Data Sender Utility
 
-This service sends simulated server metrics to the DTLabs API at configurable frequencies ranging from 1 to 10 Hz.
+This is a mockup service that simulates servers sending sensor data readings to the API at configurable frequencies. It can create multiple virtual servers and continuously send randomized sensor data. Its used to test frequency limit rates, and how te api handles various requests por second.
 
 ## Features
 
-- Configurable frequency of data sending (1-10 Hz)
-- Automatic server registration (optional)
-- Randomized server metrics generation (CPU, memory, disk, network)
-- Easy configuration via environment variables or command-line arguments
+- Automatically registers users and servers
+- Sends randomized temperature, voltage, current, and humidity readings
+- Configurable sending frequency (1-10 Hz)
+- Supports multiple virtual servers
+- Docker ready
+
+## Requirements
+
+- Python 3.11 or higher
+- Required Python packages (see `requirements.txt`):
+  - aiohttp
+  - schedule
 
 ## Installation
 
-1. Install the required dependencies:
+### Local Installation
 
-```bash
-pip install -r requirements.txt
+1. Create a virtual environment:
+   ```
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
+
+2. Install dependencies:
+   ```
+   pip install -r requirements.txt
+   ```
+
+### Docker Installation
+
+Build the Docker image:
+```
+docker build -t data-sender .
 ```
 
 ## Usage
 
-### Running Directly
+### Command Line Arguments
 
-You can run the service directly using Python:
+The application accepts the following command line arguments:
 
-```bash
-python data_sender.py --api-url http://localhost:8000 --frequency 1.0 --server-name "MyServer" --auth-token "your-auth-token"
-```
+| Argument | Description | Default |
+|----------|-------------|---------|
+| `--api-url` | Base URL of the API | http://host.docker.internal:8000 |
+| `--frequency` | Frequency in Hz (1-10) | 1.0 |
+| `--num-servers` | Number of servers to create | 1 |
+| `--username` | Username for authentication | admin |
+| `--password` | Password for authentication | admin |
 
-### Command-line Arguments
-
-- `--api-url`: Base URL of the API (default: http://localhost:8000)
-- `--frequency`: Frequency in Hz (1-10) (default: 1.0)
-- `--server-id`: Server ID if already registered (optional)
-- `--server-name`: Server name for registration (required if server-id not provided)
-- `--auth-token`: Authentication token (required for server registration)
+NOTE: The API only allows up to 10hz frequencies from one server, more than that it will return code 429
 
 ### Environment Variables
 
-All command-line arguments can be set using environment variables:
+The application also accepts the following environment variables (which override command line arguments):
 
-- `API_URL`: Base URL of the API
-- `FREQUENCY`: Frequency in Hz (1-10)
-- `SERVER_ID`: Server ID if already registered
-- `SERVER_NAME`: Server name for registration
-- `AUTH_TOKEN`: Authentication token
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `API_URL` | Base URL of the API | http://host.docker.internal:8000 |
+| `FREQUENCY` | Frequency in Hz (1-10) | 1.0 |
+| `NUM_SERVERS` | Number of servers to create | 1 |
+| `USERNAME` | Username for authentication | admin |
+| `PASSWORD` | Password for authentication | admin |
+| `SERVER_NAME` | Custom server name | Auto-Sensor |
 
-## Using Docker
+### Running Locally
 
-Build the Docker image:
-
-```bash
-docker build -t readings-sender .
+Run the application with default settings:
+```
+python data_sender.py
 ```
 
-Run the container:
-
-```bash
-docker run -e API_URL=http://your-api-url:8000 -e FREQUENCY=2.0 -e SERVER_NAME="Docker-Server" -e AUTH_TOKEN="your-auth-token" readings-sender
+Run with custom settings:
+```
+python data_sender.py --api-url http://host.docker.internal:8000 --frequency 5.0 --num-servers 3 --username user1 --password pass123
 ```
 
-## Integration with Main Application
+### Running with Docker
 
-You can add this service to your existing docker-compose.yml:
-
-```yaml
-services:
-  # ... existing services
-  
-  metrics-sender:
-    build:
-      context: ./api_consumer
-      dockerfile: Dockerfile
-    container_name: metrics-sender
-    restart: always
-    environment:
-      - API_URL=http://app:8000
-      - FREQUENCY=2.0
-      - SERVER_NAME=MetricsServer
-      - AUTH_TOKEN=your-auth-token
-    networks:
-      - dtlabs-network
-    depends_on:
-      - app
+Run with default settings:
 ```
+docker run -d data-sender
+```
+
+Run with environment variables:
+```
+docker run -d \
+  -e API_URL=http://host.docker.internal:8000 \
+  -e FREQUENCY=5.0 \
+  -e NUM_SERVERS=3 \
+  -e USERNAME=admin \
+  -e PASSWORD=admin \
+  data-sender
+```
+
+## How It Works
+
+1. The utility first attempts to register the user; if the user exists, it proceeds to login
+2. After successful authentication, it registers the specified number of servers
+3. For each registered server, it generates random sensor readings at the specified frequency
+4. Readings are sent to the API endpoint (`/data`) continuously until the application is stopped
+
+## Sensor Data Format
+
+Each reading includes:
+
+```json
+{
+  "server_ulid": "server_id_here",
+  "timestamp": "2023-01-01T12:00:00.000000",
+  "temperature": 75.42,  // Optional, can be null
+  "voltage": 110.25,     // Optional, can be null
+  "current": 5.67,       // Optional, can be null
+  "humidity": 45.89      // Optional, can be null
+}
+```
+
+## Troubleshooting
+
+- If you see authentication errors, check that the API is running and accessible
+- If server registration fails, ensure the server name is unique
+- For connection issues, verify the API_URL is correct and the API is running
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.

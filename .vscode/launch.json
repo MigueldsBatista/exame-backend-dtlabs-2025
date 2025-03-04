@@ -3,7 +3,9 @@
     "configurations": [
         
 
-        
+
+
+
         {
             "name": "Python Debugger: FastAPI",
             "type": "debugpy",
@@ -13,9 +15,8 @@
                 "main:app",
                 "--reload"
             ],
-            "cwd": "app",
-            "jinja": true
-        }
-        
-    ]
+            "jinja": true,
+            "cwd":"app"
+        },
+    ],
 }

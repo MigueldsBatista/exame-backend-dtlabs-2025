@@ -1,12 +1,14 @@
 from datetime import datetime
-
+import pytest
 from services.server_service import ServerService
 
 from .conftest import _create_test_data_for_aggregations
 
 
 def test_post_empty_server_name(authenticated_client, db):
-    response = authenticated_client.post("/servers", json={"server_name": ""})
+    response = authenticated_client.post("/servers", json={
+        "server_name": ""
+    })
     assert response.status_code == 422
 
 
@@ -100,3 +102,31 @@ def test_find_health_only_for_user(authenticated_client, db):
     assert response.json()[0]["server_ulid"] == server_ulid
     assert response.json()[0]["server_name"] == "Dolly 2"
     assert response.json()[0]["status"] == "offline"
+
+
+def test_offline_server_after_ten_seconds(authenticated_client, db):
+
+    response = authenticated_client.post("/servers", json={
+        "server_name": "Dolly 1"
+    })
+    
+    server_ulid = response.json()["server_ulid"]
+
+    authenticated_client.post("/data", json={
+        "server_ulid": server_ulid,
+        "temperature": 25.5,
+        "timestamp": datetime.now().isoformat()
+    })
+
+    response = authenticated_client.get(f"/health/{server_ulid}")
+    
+    assert response.status_code == 200
+    assert response.json()["status"] == "online"
+
+    import time
+    time.sleep(11)
+
+    response = authenticated_client.get(f"/health/{server_ulid}")
+    
+    assert response.status_code == 200
+    assert response.json()["status"] == "offline"

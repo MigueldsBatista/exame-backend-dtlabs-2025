@@ -50,8 +50,8 @@ This project is a FastAPI application connected to a PostgreSQL database, runnin
     - Run the FastAPI application
 
 3. **Access the application**:
-    - FastAPI at [http://localhost:8000](http://localhost:8000)
-    - Interactive documentation at [http://localhost:8000/docs](http://localhost:8000/docs)
+    - FastAPI at [http://host.docker.internal:8000](http://host.docker.internal:8000)
+    - Interactive documentation at [http://host.docker.internal:8000/docs](http://host.docker.internal:8000/docs)
 
 ## Useful Commands
 
@@ -95,3 +95,24 @@ ports:
 ```bash
 docker-compose exec app psql -h db -U postgres -d dtlabs
 ```
+
+## How to run tests inside the container
+```bash
+docker-compose exec app bash
+```
+
+### Run all tests
+```bash
+pytest
+
+```
+### Run tests with verbose output
+```bash
+pytest -v
+```
+
+### Run tests in a specific file
+```bash
+pytest app/tests/test_specific_file.py
+```
+
