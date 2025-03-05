@@ -3,7 +3,7 @@ from routes import auth_routes, server_routes, reading_routes
 import uvicorn
 from exceptions.handler import register_exception_handlers
 from middlewares import register_middlewares
-
+from core.database import create_tables
 # Create FastAPI app with improved OpenAPI documentation
 app = FastAPI(
     title="IoT Server Monitoring API",
@@ -46,6 +46,8 @@ Each server can have at most one of each sensor type:
     }
 
 )
+
+create_tables()
 register_exception_handlers(app)
 register_middlewares(app)
 
