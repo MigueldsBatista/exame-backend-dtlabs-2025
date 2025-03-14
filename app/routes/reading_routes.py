@@ -40,7 +40,7 @@ router = APIRouter(
 async def submit_reading(
     post_reading: PostReading,
     reading_service: ReadingService = Depends(get_reading_service),
-    ):
+    ) -> ReadingResponse:
 
     reading_entity = ReadingMapper.from_post_to_entity(post_reading)
     saved_entity = reading_service.save(reading_entity)
@@ -49,7 +49,7 @@ async def submit_reading(
     
 
 @router.get(
-    "", 
+    "",
     status_code=status.HTTP_200_OK,
     summary="Query sensor readings",
     description="""

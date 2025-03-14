@@ -2,6 +2,8 @@
 
 A FastAPI application for managing IoT servers and sensor data, running with PostgreSQL in Docker containers.
 
+![Swagger UI](media/swagger1.png)
+
 ## Project Overview
 
 This system enables:
@@ -16,6 +18,8 @@ This system enables:
 - **Backend API**: FastAPI application handling requests and business logic
 - **Database**: PostgreSQL storing server information and sensor readings
 - **API Sender Service**: Utility for simulating IoT device requests
+
+![System Architecture](media/swagger2.png)
 
 ## Prerequisites
 
@@ -67,17 +71,17 @@ This system enables:
 3. **Access the application**:
     - API at [http://localhost:8000](http://localhost:8000)
     - Interactive API documentation at [http://localhost:8000/docs](http://localhost:8000/docs)
-    - Alternative documentation at [http://localhost:8000/redoc](http://localhost:8000/redoc)
 
-## API Testing with API Sender Service
 
-The project includes an API sender service in the `api_consumer` directory that can simulate IoT device requests:
+## API Router code sample -> [CLICK HERE](/app/routes/reading_routes.py)
 
-### Features:
-- Simulates multiple IoT servers sending data
-- Configurable request frequency (1-10 Hz)
-- Random or specified sensor data generation
-- Authentication handling
+
+![Code Sample](media/code_sample.png)
+
+## Test code sample -> [CLICK HERE](app/tests/test_reading.py)
+
+![Code Sample](media/code_sample_test.png)
+
 
 ### Running the API Sender:
 
@@ -132,8 +136,8 @@ docker-compose exec app bash
 ### Run all tests
 ```bash
 pytest
-
 ```
+
 ### Run tests with verbose output
 ```bash
 pytest -v
